@@ -105,7 +105,6 @@ class PgNode_s(PgNode):
 class PgNode_a(PgNode):
     """A-type (action) Planning Graph node - inherited from PgNode """
 
-
     def __init__(self, action: Action):
         """A-level Planning Graph node constructor
 
@@ -303,13 +302,27 @@ class PlanningGraph():
         :return:
             adds A nodes to the current level in self.a_levels[level]
         """
-        # TODO add action A level to the planning graph as described in the Russell-Norvig text
+        # add action A level to the planning graph as described in the Russell-Norvig text
         # 1. determine what actions to add and create those PgNode_a objects
         # 2. connect the nodes to the previous S literal level
         # for example, the A0 level will iterate through all possible actions for the problem and add a PgNode_a to a_levels[0]
         #   set iff all prerequisite literals for the action hold in S0.  This can be accomplished by testing
         #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
+
+        self.a_levels.append(set())
+        for action in self.all_actions:  # includes persistent actions
+            action_node = PgNode_a(action)
+            # if action preconditions match the state
+            if action_node.prenodes.issubset(self.s_levels[level]):
+                # connect parent with this action
+                for precondition_state_node in action_node.prenodes:
+                    precondition_state_node.children.add(action_node)
+                    action_node.parents.add(precondition_state_node)
+                    # need to update node in a set
+                    self.s_levels[level].add(precondition_state_node)
+                self.a_levels[level].add(action_node)
+
 
     def add_literal_level(self, level):
         """ add an S (literal) level to the Planning Graph
