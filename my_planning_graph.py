@@ -449,7 +449,8 @@ class PlanningGraph():
         # test for Competing Needs between nodes
         for node_a1_precondition in node_a1.parents:
             for node_a2_precondition in node_a2.parents:
-                if node_a1_precondition.is_mutex(node_a2_precondition) or node_a2_precondition.is_mutex(node_a1_precondition):
+                if node_a1_precondition.is_mutex(node_a2_precondition) or node_a2_precondition.is_mutex(
+                        node_a1_precondition):
                     return True
         return False
 
@@ -507,7 +508,8 @@ class PlanningGraph():
         # test for Inconsistent Support between nodes
         for node_s1_causality in node_s1.parents:
             for node_s2_causality in node_s2.parents:
-                if not node_s1_causality.is_mutex(node_s2_causality) or not node_s2_causality.is_mutex(node_s1_causality):
+                if not node_s1_causality.is_mutex(node_s2_causality) or not node_s2_causality.is_mutex(
+                        node_s1_causality):
                     return False
         return True
 
@@ -522,14 +524,15 @@ class PlanningGraph():
         level_sum = 0
         # for each goal in the problem, determine the level cost, then add them together
         for goal in self.problem.goal:
-            done = False
-            for lvl, states_set in enumerate(self.s_levels):
-                if done:
-                    break  # skip unnecessary checks if previous loop found solution
-                for state_node in states_set:
-                    if state_node.symbol == goal and state_node.is_pos is True:
-                        level_sum += lvl
-                        done = True
-                        break  # breaks out only from states loop
-
+            level_sum += self.level_cost(goal)
         return level_sum
+
+    def level_cost(self, goal) -> int:
+        for lvl, states_set in enumerate(self.s_levels):
+            level_literal_set = set(self.node_s_literal(n) for n in states_set)
+            if goal in level_literal_set:
+                return lvl
+        return 0
+
+    def node_s_literal(self, node):
+        return expr(node.symbol) if node.is_pos else expr('~{}'.format(node.symbol))
